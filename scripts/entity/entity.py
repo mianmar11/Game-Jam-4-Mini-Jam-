@@ -117,7 +117,7 @@ class Player(Entity):
         if self.vel.length() != 0:
             self.state = 'walking'
         else:
-            self.state = 'standing'
+            self.state = 'standing'  
         
         if self.vel.x > 0:
             self.facing_left = False
