@@ -7,22 +7,22 @@ ADJACENT_NEIGHBOR_MAP = {
     tuple(sorted([(0, 1), (-1, 0)])): 3, # top right
 
     tuple(sorted([(0, -1), (1, 0), (0, 1)])): 4, # left
-    tuple(sorted([(0, 1), (-1, 0), (0, -1)])): 7, # right
+    tuple(sorted([(0, 1), (1, 0), (0, -1), (-1, 0)])): 11, # middle
+    tuple(sorted([(0, 1), (-1, 0), (0, -1)])): 9, # right
 
-    tuple(sorted([(0, -1), (1, 0)])): 12, # bottom left
-    tuple(sorted([(0, -1), (-1, 0), (1, 0)])): 13, # bottom
-    tuple(sorted([(0, -1), (-1, 0)])): 15, # bottom right
+    tuple(sorted([(0, -1), (1, 0)])): 15, # bottom left
+    tuple(sorted([(0, -1), (-1, 0), (1, 0)])): 16, # bottom
+    tuple(sorted([(0, -1), (-1, 0)])): 18, # bottom right
 }
 DOUBLE_NEIGHBOR_MAP = {
     tuple(sorted([(0, 1), (1, 0), (0, -1), (-1, 0), (0, 2)])): 5, # middle
-    tuple(sorted([(0, 1), (1, 0), (0, -1), (-1, 0), (0, -2)])): 9, # middle
 }
 
 CORNER_NEIGHBOR_MAP = {
-    tuple(sorted([(0, 1), (1, 0), (0, -1), (-1, 0), (-1, -1), (1, -1), (-1, 1)])): 9, # topleft corner
-    tuple(sorted([(0, 1), (1, 0), (0, -1), (-1, 0), (-1, -1), (1, -1), (1, 1)])): 10, # topright corner
-    tuple(sorted([(0, 1), (1, 0), (0, -1), (-1, 0), (-1, -1), (-1, 1), (1, 1)])): 11, # bottomleft corner
-    tuple(sorted([(0, 1), (1, 0), (0, -1), (-1, 0), (1, -1), (-1, 1), (1, 1)])): 12 # bottomright corner
+    tuple(sorted([(0, 1), (1, 0), (0, -1), (-1, 0), (-1, -1), (1, -1), (-1, 1)])): 23, # topleft corner
+    tuple(sorted([(0, 1), (1, 0), (0, -1), (-1, 0), (-1, -1), (1, -1), (1, 1)])): 22, # topright corner
+    tuple(sorted([(0, 1), (1, 0), (0, -1), (-1, 0), (-1, -1), (-1, 1), (1, 1)])): 21, # bottomleft corner
+    tuple(sorted([(0, 1), (1, 0), (0, -1), (-1, 0), (1, -1), (-1, 1), (1, 1)])): 20 # bottomright corner
 }
 TILES_IDS = {
     'sandstone': {
@@ -30,23 +30,30 @@ TILES_IDS = {
         1: (1, 0),
         2: (2, 0),
         3: (3, 0), 
-        16: (4, 0),
 
         4: (0, 1),
         5: (1, 1),
         6: (2, 1),
-        7: (3, 1), 
+        7: (4, 1), 
+        8: (5, 1),
+        9: (3, 1),
+
+        10: (0, 2),
+        11: (1, 2), 
+        12: (2, 2),
+        13: (4, 2),
+        14: (3, 2),
         
-        8: (0, 2),
-        9: (1, 2),
-        10: (2, 2),
-        11: (3, 2), 
-        17: (4, 2),
+        15: (0, 3),
+        16: (1, 3),
+        17: (2, 3),
+        18: (3, 3),
+        19: (4, 3),
         
-        12: (0, 3),
-        13: (1, 3),
-        14: (2, 3),
-        15: (3, 3),
+        20: (4, 0),
+        21: (5, 0),
+        22: (5, 2),
+        23: (5, 3),
 
     }
 } 
@@ -54,12 +61,12 @@ TILES_IDS = {
 variants_spawnrates = {
     
     (1, 2): [.6, .4], # top
-    (4, 8): [0.6, 0.4], # left
-    (7, 11): [0.4, 0.6], # right
-    (13, 14): [0.4, 0.6], # bottom
+    (4, 10): [0.6, 0.4], # left
+    (9, 14): [0.4, 0.6], # right
+    (16, 17): [0.4, 0.6], # bottom
 
     (5, 6): [0.5, 0.4], # wall
-    (9, 10, 17): [0.25, 0.15, 0.6], # walkable tile
+    (11, 12, 13): [0.25, 0.15, 0.6], # walkable tile
 }
 
 
@@ -105,13 +112,14 @@ def auto_tile(tiles, tiles_pos):
                 offset = pos[0] + shift[0], pos[1] + shift[1]
 
                 if offset in tiles:
-                    if tiles[offset].type == tile_type:
+                    # if tiles[offset].type == tile_type:
                         neighbor_offsets.add(shift)
             
             for variants in variants_spawnrates:
                 if ADJACENT_NEIGHBOR_MAP[tuple(sorted(neighbor_offsets))] in variants:
                     picked_variant = random.choices(variants, variants_spawnrates[variants])[0]
-                    tiles[pos].change(tile_type, ADJACENT_NEIGHBOR_MAP[tuple(sorted(neighbor_offsets))], get_surface(tile_sprites[tile_type], TILES_IDS[tile_type].get(picked_variant), tile_size))
+                    if not tiles[pos].variant in variants:
+                        tiles[pos].change(tile_type, picked_variant, get_surface(tile_sprites[tile_type], TILES_IDS[tile_type].get(picked_variant), tile_size))
                     break
             else:
                 tiles[pos].change(tile_type, ADJACENT_NEIGHBOR_MAP[tuple(sorted(neighbor_offsets))], get_surface(tile_sprites[tile_type], TILES_IDS[tile_type].get(ADJACENT_NEIGHBOR_MAP[tuple(sorted(neighbor_offsets))]), tile_size))
@@ -125,30 +133,32 @@ def auto_tile(tiles, tiles_pos):
                         neighbor_offsets.add(shift)
             
             for variants in variants_spawnrates:
-                # print(neighbor_offsets, DOUBLE_NEIGHBOR_MAP[tuple(sorted(neighbor_offsets))])
-                if DOUBLE_NEIGHBOR_MAP[tuple(sorted(neighbor_offsets))] in variants:
-                    print(variants)
+                if DOUBLE_NEIGHBOR_MAP.get(tuple(sorted(neighbor_offsets))) in variants:
                     picked_variant = random.choices(variants, variants_spawnrates[variants])[0]
-                    tiles[pos].change(tile_type, DOUBLE_NEIGHBOR_MAP[tuple(sorted(neighbor_offsets))], get_surface(tile_sprites[tile_type], TILES_IDS[tile_type].get(picked_variant), tile_size))
+                    if not tiles[pos].variant in variants:
+                        # print(picked_variant, tiles[pos].variant, variants)
+                        tiles[pos].change(tile_type, picked_variant, get_surface(tile_sprites[tile_type], TILES_IDS[tile_type].get(picked_variant), tile_size))
                     break
-            else:
-                tiles[pos].change(tile_type, DOUBLE_NEIGHBOR_MAP[tuple(sorted(neighbor_offsets))], get_surface(tile_sprites[tile_type], TILES_IDS[tile_type].get(DOUBLE_NEIGHBOR_MAP[tuple(sorted(neighbor_offsets))]), tile_size))
-            
+            if (0, 2) in neighbor_offsets:
+                neighbor_offsets.remove((0, 2))
+            if (0, -2) in neighbor_offsets:
+                neighbor_offsets.remove((0, -2))
+            # corner
+            for shift in corner_neighbor_offsets:
+                offset = pos[0] + shift[0], pos[1] + shift[1]
 
-            # # corner
-            # for shift in corner_neighbor_offsets:
-            #     offset = pos[0] + shift[0], pos[1] + shift[1]
-
-            #     if offset in tiles:
-            #         if tiles[offset].type == tile_type:
-            #             neighbor_offsets.add(shift)
+                if offset in tiles:
+                    if tiles[offset].type == tile_type:
+                        neighbor_offsets.add(shift)
             
             # for variants in variants_spawnrates:
             #     if tile_variant in variants:
-            #         tiles[pos].change(tile_type, CORNER_NEIGHBOR_MAP[tuple(sorted(neighbor_offsets))], random.choices(variants, variants_spawnrates[variants])[0])
+            # print(neighbor_offsets)
+            tiles[pos].change(tile_type, CORNER_NEIGHBOR_MAP[tuple(sorted(neighbor_offsets))], get_surface(tile_sprites[tile_type], TILES_IDS[tile_type].get(CORNER_NEIGHBOR_MAP[tuple(sorted(neighbor_offsets))]), tile_size))
+            # print(tiles[pos].variant)
         
         except KeyError as e:
-            print(e)
+            pass
 
     return tiles
 
@@ -171,8 +181,9 @@ class Tile:
         self.rect.x = self.pos[0] * tile_size
         self.rect.y = self.pos[1] * tile_size
     
-    def draw(self, draw_surf):
-        draw_surf.blit(self.image, self.rect)
+    def draw(self, draw_surf, camera_offset):
+        render_x, render_y = self.rect.x - camera_offset[0], self.rect.y - camera_offset[1]
+        draw_surf.blit(self.image, (render_x, render_y))
     
     def change(self, tile_type, tile_variant, img):
         self.type = tile_type
